@@ -38,7 +38,9 @@ QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress 
     socket(NULL),
     process(NULL),
     terraSync(NULL),
-    barometerOffsetkPa(-8.0f),
+    /*barometerOffsetkPa(-8.0f),*/
+    //Custom
+    barometerOffsetkPa(0.0f),
     airframeID(QGCXPlaneLink::AIRFRAME_UNKNOWN),
     xPlaneConnected(false),
     xPlaneVersion(0),
@@ -643,7 +645,7 @@ void QGCXPlaneLink::readBytes()
             }
             if (p.index == 4)
             {
-				// WORKAROUND: IF ground speed <<1m/s and altitude-above-ground <1m, do NOT use the X-Plane data, because X-Plane (tested 
+                /*// WORKAROUND: IF ground speed <<1m/s and altitude-above-ground <1m, do NOT use the X-Plane data, because X-Plane (tested
 				// with v10.3 and earlier) delivers yacc=0 and zacc=0 when the ground speed is very low, which gives e.g. wrong readings 
 				// before launch when waiting on the runway. This might pose a problem for initial state estimation/calibration. 
 				// Instead, we calculate our own accelerations.
@@ -670,6 +672,11 @@ void QGCXPlaneLink::readBytes()
 
 					//qDebug() << "X-Plane values" << xacc << yacc << zacc;
 				}
+                */
+                //Custom
+                xacc = p.f[5];
+                yacc = p.f[6];
+                zacc = p.f[4];
 
 				fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
                 emitUpdate = true;
@@ -677,8 +684,10 @@ void QGCXPlaneLink::readBytes()
             // atmospheric pressure aircraft for XPlane 9 and 10
             else if (p.index == 6)
             {
+                //Custom
                 // inHg to hPa (hecto Pascal / millibar)
-                abs_pressure = p.f[0] * 33.863886666718317f;
+                /*abs_pressure = p.f[0] * 33.863886666718317f;*/
+                abs_pressure = p.f[0];
                 temperature = p.f[1];
                 fields_changed |= (1 << 9) | (1 << 12);
             }
@@ -706,7 +715,8 @@ void QGCXPlaneLink::readBytes()
             else if ((xPlaneVersion == 10 && p.index == 17) || (xPlaneVersion == 9 && p.index == 18))
             {
                 //qDebug() << "HDNG" << "pitch" << p.f[0] << "roll" << p.f[1] << "hding true" << p.f[2] << "hding mag" << p.f[3];
-                pitch = p.f[0] / 180.0f * M_PI;
+                //Custom
+                /*pitch = p.f[0] / 180.0f * M_PI;
                 roll = p.f[1] / 180.0f * M_PI;
                 yaw = p.f[2] / 180.0f * M_PI;
 
@@ -766,9 +776,14 @@ void QGCXPlaneLink::readBytes()
 //                qDebug() << "yaw mag:" << p.f[2] << "x" << xmag << "y" << ymag;
 //                qDebug() << "yaw mag in body:" << magbody(0) << magbody(1) << magbody(2);
 
+
                 xmag = magbody(0);
                 ymag = magbody(1);
-                zmag = magbody(2);
+                zmag = magbody(2);*/
+
+                xmag = p.f[3];
+                ymag = p.f[4];
+                zmag = p.f[5];
 
                 // Rotate the measurement vector into the body frame using roll and pitch
 
@@ -785,16 +800,27 @@ void QGCXPlaneLink::readBytes()
 				//qDebug() << "LAT/LON/ALT:" << p.f[0] << p.f[1] << p.f[2];
 				lat = p.f[0];
 				lon = p.f[1];
+                /*
 				alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
 				alt_agl = p.f[3] * 0.3048f; //convert feet (AGL) to meters
+                */
+                //Custom
+                alt = p.f[2];
+                alt_agl = p.f[3];
             }
             else if (p.index == 21)
             {
-                vy = p.f[3];
+                /*vy = p.f[3];
                 vx = -p.f[5];
                 // moving 'up' in XPlane is positive, but its negative in NED
                 // for us.
-                vz = -p.f[4];
+                vz = -p.f[4];*/
+
+                //Custom
+                vy = p.f[3];
+                vx = p.f[5];
+                vz = p.f[4];
+
             }
             else if (p.index == 12)
             {
@@ -1049,9 +1075,15 @@ void QGCXPlaneLink::setRandomPosition()
     // Initialize generator
     srand(0);
 
-    double offLat = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
+    //Custom
+
+    /*double offLat = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
     double offLon = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
-    double offAlt = rand() / static_cast<double>(RAND_MAX) * 200.0 + 100.0;
+    double offAlt = rand() / static_cast<double>(RAND_MAX) * 200.0 + 100.0;*/
+
+    double offLat = 0.0;
+    double offLon = 0.0;
+    double offAlt = 0.0;
 
     if (_vehicle->altitudeAMSL()->rawValue().toDouble() + offAlt < 0)
     {
@@ -1071,9 +1103,15 @@ void QGCXPlaneLink::setRandomAttitude()
     // Initialize generator
     srand(0);
 
-    double roll = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
+    //Custom
+
+    /*double roll = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
     double pitch = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
-    double yaw = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
+    double yaw = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;*/
+
+    double roll =  0.0;
+    double pitch = 0.0;
+    double yaw = 0.0;
 
     setPositionAttitude(_vehicle->latitude(),
                         _vehicle->longitude(),

@@ -82,7 +82,9 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 
     // Note variances calculated from flight case from this log: http://dash.oznet.ch/view/MRjW8NUNYQSuSZkbn8dEjY
     // TODO: calibrate stand-still pixhawk variances
-    xacc_var(0.6457f),
+
+    //Custom
+    /*xacc_var(0.6457f),
     yacc_var(0.7048f),
     zacc_var(0.97885f),
     rollspeed_var(0.8126f),
@@ -94,8 +96,8 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     abs_pressure_var(0.5802f),
     diff_pressure_var(0.5802f),
     pressure_alt_var(0.5802f),
-    temperature_var(0.7145f),
-    /*
+    temperature_var(0.7145f),*/
+
     xacc_var(0.0f),
     yacc_var(0.0f),
     zacc_var(0.0f),
@@ -109,7 +111,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     diff_pressure_var(0.0f),
     pressure_alt_var(0.0f),
     temperature_var(0.0f),
-    */
+
 
 #ifndef __mobile__
     simulation(0),
@@ -1312,8 +1314,9 @@ void UAS::enableHilXPlane(bool enable)
             delete simulation;
         }
         simulation = new QGCXPlaneLink(_vehicle);
-
-        float noise_scaler = 0.0001f;
+        //Custom
+        float noise_scaler = 0.0f;
+        /*float noise_scaler = 0.0001f;*/
         xacc_var = noise_scaler * 0.2914f;
         yacc_var = noise_scaler * 0.2914f;
         zacc_var = noise_scaler * 0.9577f;

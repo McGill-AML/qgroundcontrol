@@ -38,9 +38,7 @@ QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress 
     socket(NULL),
     process(NULL),
     terraSync(NULL),
-    /*barometerOffsetkPa(-8.0f),*/
-    //Custom
-    barometerOffsetkPa(0.0f),
+    barometerOffsetkPa(-8.0f),
     airframeID(QGCXPlaneLink::AIRFRAME_UNKNOWN),
     xPlaneConnected(false),
     xPlaneVersion(0),
@@ -405,9 +403,15 @@ void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitch
     else
     {
         // direct pass-through, normal fixed-wing.
+        //Custom
+        /*
         p.f[0] = -pitchElevator;
         p.f[1] = rollAilerons;
+        p.f[2] = yawRudder;*/
+        p.f[0] = pitchElevator;
+        p.f[1] = rollAilerons;
         p.f[2] = yawRudder;
+
 
         // Ail / Elevon / Rudder
 
@@ -515,7 +519,12 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
         default:
         {
             /* direct pass-through, normal fixed-wing. */
-            p.f[0] = -ctl_1;        ///< X-Plane Elevator
+            //Custom
+            /*p.f[0] = -ctl_1;        ///< X-Plane Elevator
+            p.f[1] = ctl_0;         ///< X-Plane Aileron
+            p.f[2] = ctl_2;         ///< X-Plane Rudder*/
+
+            p.f[0] = ctl_1;        ///< X-Plane Elevator
             p.f[1] = ctl_0;         ///< X-Plane Aileron
             p.f[2] = ctl_2;         ///< X-Plane Rudder
 

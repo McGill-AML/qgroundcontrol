@@ -38,7 +38,9 @@ QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress 
     socket(NULL),
     process(NULL),
     terraSync(NULL),
-    barometerOffsetkPa(-8.0f),
+    //custom
+    //barometerOffsetkPa(-8.0f),
+    barometerOffsetkPa(0.0f),
     airframeID(QGCXPlaneLink::AIRFRAME_UNKNOWN),
     xPlaneConnected(false),
     xPlaneVersion(0),
@@ -646,9 +648,15 @@ void QGCXPlaneLink::readBytes()
 
             if (p.index == 3)
             {
-                ind_airspeed = p.f[5] * 0.44704f;
+                //custom
+                /*ind_airspeed = p.f[5] * 0.44704f;
                 true_airspeed = p.f[6] * 0.44704f;
-                groundspeed = p.f[7] * 0.44704;
+                groundspeed = p.f[7] * 0.44704;*/
+
+                ind_airspeed = p.f[5];
+                true_airspeed = p.f[6];
+                groundspeed = p.f[7];
+
 
                 //qDebug() << "SPEEDS:" << "airspeed" << airspeed << "m/s, groundspeed" << groundspeed << "m/s";
             }
@@ -698,6 +706,8 @@ void QGCXPlaneLink::readBytes()
                 /*abs_pressure = p.f[0] * 33.863886666718317f;*/
                 abs_pressure = p.f[0];
                 temperature = p.f[1];
+                //custom
+                pressure_alt = p.f[2];
                 fields_changed |= (1 << 9) | (1 << 12);
             }
             // Forward controls from X-Plane to MAV, not very useful
@@ -793,6 +803,8 @@ void QGCXPlaneLink::readBytes()
                 xmag = p.f[3];
                 ymag = p.f[4];
                 zmag = p.f[5];
+
+                fields_changed |= (1 << 6) | (1 << 7) | (1 << 8);
 
                 // Rotate the measurement vector into the body frame using roll and pitch
 
@@ -893,7 +905,9 @@ void QGCXPlaneLink::readBytes()
 
         if (_sensorHilEnabled)
         {
-            diff_pressure = (ind_airspeed * ind_airspeed * 1.225f) / 2.0f;
+            //custom
+            //diff_pressure = (ind_airspeed * ind_airspeed * 1.225f) / 2.0f;
+            diff_pressure = 0.0f;
 
             /* tropospheric properties (0-11km) for standard atmosphere */
             const double T1 = 15.0 + 273.15;	/* temperature at base height in Kelvin */
@@ -916,7 +930,8 @@ void QGCXPlaneLink::readBytes()
              * h = -------------------------------  + h1
              *                   a
              */
-            pressure_alt = (((pow((p / p1), (-(a * R) / g))) * T1) - T1) / a;
+            //custom
+            //pressure_alt = (((pow((p / p1), (-(a * R) / g))) * T1) - T1) / a;
 
             // set pressure alt to changed
             fields_changed |= (1 << 11);
@@ -926,8 +941,11 @@ void QGCXPlaneLink::readBytes()
 
             // XXX make these GUI-configurable and add randomness
             int gps_fix_type = 3;
-            float eph = 0.3f;
-            float epv = 0.6f;
+            // Custom
+            /*float eph = 0.3f;
+            float epv = 0.6f;*/
+            float eph = 1.2f;
+            float epv = 1.8f;
             float vel = sqrt(vx*vx + vy*vy + vz*vz);
             float cog = atan2(vy, vx);
             int satellites = 8;
@@ -939,14 +957,16 @@ void QGCXPlaneLink::readBytes()
                                  vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
         }
 
+        //custom
+
         // Limit ground truth to 25 Hz
-        if (QGC::groundTimeMilliseconds() - simUpdateLastGroundTruth > 40) {
+        /*if (QGC::groundTimeMilliseconds() - simUpdateLastGroundTruth > 40) {
             emit hilGroundTruthChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                                        pitchspeed, yawspeed, lat, lon, alt,
                                        vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
 
             simUpdateLastGroundTruth = QGC::groundTimeMilliseconds();
-        }
+        }*/
     }
 
     if (!oldConnectionState && xPlaneConnected)
